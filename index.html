@@ -82,7 +82,7 @@
 
   <script>
     const SUPABASE_URL = 'https://yejialakeivdhwntmagf.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InllamlhbGFrZWl2ZGh3bnRtYWdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI0NTg3MzIsImV4cCI6MjA0ODAzNDczMn0.VIy7EzwNLFwzBYNPKbSLWUwOZMQcpLzPh6kZTMm2x5c';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InllamlhbGFrZWl2ZGh3bnRtYWdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5MTE0MjcsImV4cCI6MjA3OTQ4NzQyN30.a1WA6V7pD2tss1pkh1OSJcuknt6FTyeabvm9UzNjcfs';
     
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
@@ -138,6 +138,8 @@
           .order('manager_name');
         
         if (proError || managerError) {
+          console.error('Pro Error:', proError);
+          console.error('Manager Error:', managerError);
           throw new Error('데이터 조회 실패');
         }
         
