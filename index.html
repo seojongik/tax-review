@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>급여 공제 입력</title>
+  <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
@@ -83,7 +84,7 @@
     const SUPABASE_URL = 'https://yejialakeivdhwntmagf.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InllamlhbGFrZWl2ZGh3bnRtYWdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI0NTg3MzIsImV4cCI6MjA0ODAzNDczMn0.VIy7EzwNLFwzBYNPKbSLWUwOZMQcpLzPh6kZTMm2x5c';
     
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
     const params = new URLSearchParams(window.location.search);
     const branchId = params.get('branch');
@@ -120,7 +121,7 @@
       }
       
       try {
-        const { data: proData, error: proError } = await supabase
+        const { data: proData, error: proError } = await db
           .from('v2_salary_pro')
           .select('*')
           .eq('branch_id', branchId)
@@ -128,7 +129,7 @@
           .eq('month', month)
           .order('pro_name');
         
-        const { data: managerData, error: managerError } = await supabase
+        const { data: managerData, error: managerError } = await db
           .from('v2_salary_manager')
           .select('*')
           .eq('branch_id', branchId)
@@ -326,7 +327,7 @@
           updateData.salary_net = totalSalary - updateData.deduction_sum;
           
           const tableName = emp._type === 'pro' ? 'v2_salary_pro' : 'v2_salary_manager';
-          await supabase.from(tableName).update(updateData).eq('id', emp.id);
+          await db.from(tableName).update(updateData).eq('id', emp.id);
         }
         
         document.getElementById('messageArea').innerHTML = '<div class="message success">✅ 저장되었습니다!</div>';
