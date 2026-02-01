@@ -21,19 +21,27 @@
     .message{padding:16px 24px;text-align:center;font-weight:500}
     .message.success{background:#d1fae5;color:#065f46}
     .message.error{background:#fee2e2;color:#991b1b}
-    table{width:100%;border-collapse:collapse}
-    th,td{padding:12px 16px;text-align:left;border-bottom:1px solid #e5e7eb}
+    table{width:100%;border-collapse:collapse;table-layout:fixed}
+    th,td{padding:12px 16px;text-align:left;border-bottom:1px solid #e5e7eb;overflow:hidden;text-overflow:ellipsis}
     th{background:#f8f9fa;font-weight:600;font-size:13px;color:#374151;position:sticky;top:0}
     td{font-size:14px}
     tr:hover{background:#f8f9fa}
     tr.completed{background:#f0fdf4}
     tr.completed input{background:#e5e7eb}
+    /* 고정 열 너비 */
+    .col-name{width:140px}
+    .col-contract{width:90px}
+    .col-salary{width:130px}
+    .col-input{width:130px}
+    .col-sum{width:110px}
+    .col-net{width:130px}
+    .col-status{width:90px}
     .name-cell{font-weight:600;display:flex;align-items:center;gap:8px}
     .type-badge{font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500;white-space:nowrap}
     .type-badge.pro{background:#dbeafe;color:#1d4ed8}
     .type-badge.manager{background:#fef3c7;color:#92400e}
     .amount{text-align:right;font-family:'SF Mono',monospace;white-space:nowrap}
-    .deduction-input{width:110px;padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;text-align:right;transition:border-color .2s}
+    .deduction-input{width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;text-align:right;transition:border-color .2s}
     .deduction-input:focus{outline:none;border-color:#667eea;box-shadow:0 0 0 3px rgba(102,126,234,.1)}
     .deduction-input:read-only{background:#f3f4f6;cursor:not-allowed}
     .deduction-sum{color:#dc2626;font-weight:600}
@@ -188,25 +196,28 @@
         const isCompleted = emp.salary_status === '지급완료';
         const rowClass = isCompleted ? 'completed' : '';
         
+        // 프리랜서: 사업소득세, 지방소득세 / 정규직: 4대보험, 소득세
+        const field1 = isFreelancer ? 'business_income_tax' : 'four_insure';
+        const field2 = isFreelancer ? 'local_tax' : 'income_tax';
+        const val1 = emp[field1] || 0;
+        const val2 = emp[field2] || 0;
+        
         return `
-          <tr class="${rowClass}" data-idx="${idx}">
-            <td class="name-cell">
-              <span class="type-badge ${emp._type}">${type}</span>
-              ${emp._name}
+          <tr class="${rowClass}" data-idx="${idx}" data-freelancer="${isFreelancer}">
+            <td class="col-name">
+              <div class="name-cell">
+                <span class="type-badge ${emp._type}">${type}</span>
+                ${emp._name}
+              </div>
             </td>
-            <td>${emp.contract_type || '-'}</td>
-            <td class="amount">${formatCurrency(totalSalary)}</td>
-            ${isFreelancer ? `
-              <td><input type="number" data-field="business_income_tax" value="${emp.business_income_tax || 0}" ${isCompleted ? 'readonly' : ''} class="deduction-input" oninput="updateRow(${idx})"></td>
-              <td><input type="number" data-field="local_tax" value="${emp.local_tax || 0}" ${isCompleted ? 'readonly' : ''} class="deduction-input" oninput="updateRow(${idx})"></td>
-            ` : `
-              <td><input type="number" data-field="four_insure" value="${emp.four_insure || 0}" ${isCompleted ? 'readonly' : ''} class="deduction-input" oninput="updateRow(${idx})"></td>
-              <td><input type="number" data-field="income_tax" value="${emp.income_tax || 0}" ${isCompleted ? 'readonly' : ''} class="deduction-input" oninput="updateRow(${idx})"></td>
-            `}
-            <td><input type="number" data-field="other_deduction" value="${emp.other_deduction || 0}" ${isCompleted ? 'readonly' : ''} class="deduction-input" oninput="updateRow(${idx})"></td>
-            <td class="amount deduction-sum" id="deduction-${idx}">${formatCurrency(currentDeduction)}</td>
-            <td class="amount net-salary" id="net-${idx}">${formatCurrency(netSalary)}</td>
-            <td>
+            <td class="col-contract">${emp.contract_type || '-'}</td>
+            <td class="col-salary amount">${formatCurrency(totalSalary)}</td>
+            <td class="col-input"><input type="number" data-field="${field1}" value="${val1}" ${isCompleted ? 'readonly' : ''} class="deduction-input" oninput="updateRow(${idx})"></td>
+            <td class="col-input"><input type="number" data-field="${field2}" value="${val2}" ${isCompleted ? 'readonly' : ''} class="deduction-input" oninput="updateRow(${idx})"></td>
+            <td class="col-input"><input type="number" data-field="other_deduction" value="${emp.other_deduction || 0}" ${isCompleted ? 'readonly' : ''} class="deduction-input" oninput="updateRow(${idx})"></td>
+            <td class="col-sum amount deduction-sum" id="deduction-${idx}">${formatCurrency(currentDeduction)}</td>
+            <td class="col-net amount net-salary" id="net-${idx}">${formatCurrency(netSalary)}</td>
+            <td class="col-status">
               <span class="status-badge ${emp.salary_status === '세무검토완료' ? 'done' : emp.salary_status === '지급완료' ? 'paid' : ''}">
                 ${emp.salary_status || '대기'}
               </span>
@@ -220,15 +231,15 @@
           <table>
             <thead>
               <tr>
-                <th>이름</th>
-                <th>계약형태</th>
-                <th style="text-align:right">총급여</th>
-                <th>4대보험/사업소득세</th>
-                <th>소득세/지방소득세</th>
-                <th>기타공제</th>
-                <th style="text-align:right">공제합계</th>
-                <th style="text-align:right">실수령액</th>
-                <th>상태</th>
+                <th class="col-name">이름</th>
+                <th class="col-contract">계약형태</th>
+                <th class="col-salary" style="text-align:right">총급여</th>
+                <th class="col-input">4대보험/사업소득세</th>
+                <th class="col-input">소득세/지방소득세</th>
+                <th class="col-input">기타공제</th>
+                <th class="col-sum" style="text-align:right">공제합계</th>
+                <th class="col-net" style="text-align:right">실수령액</th>
+                <th class="col-status">상태</th>
               </tr>
             </thead>
             <tbody id="employeeTable">${rows}</tbody>
@@ -247,20 +258,14 @@
     function updateRow(idx) {
       const emp = allEmployees[idx];
       const row = document.querySelector(`tr[data-idx="${idx}"]`);
-      const isFreelancer = emp.contract_type === '프리랜서';
+      const isFreelancer = row.dataset.freelancer === 'true';
       const totalSalary = emp.salary_total || 0;
       
+      const inputs = row.querySelectorAll('.deduction-input');
       let deduction = 0;
-      if (isFreelancer) {
-        const bit = parseInt(row.querySelector('[data-field="business_income_tax"]')?.value || 0);
-        const lt = parseInt(row.querySelector('[data-field="local_tax"]')?.value || 0);
-        deduction = bit + lt;
-      } else {
-        const fi = parseInt(row.querySelector('[data-field="four_insure"]')?.value || 0);
-        const it = parseInt(row.querySelector('[data-field="income_tax"]')?.value || 0);
-        deduction = fi + it;
-      }
-      deduction += parseInt(row.querySelector('[data-field="other_deduction"]')?.value || 0);
+      inputs.forEach(input => {
+        deduction += parseInt(input.value || 0);
+      });
       
       document.getElementById(`deduction-${idx}`).textContent = formatCurrency(deduction);
       document.getElementById(`net-${idx}`).textContent = formatCurrency(totalSalary - deduction);
@@ -277,17 +282,11 @@
         if (!row) return;
         
         const salary = emp.salary_total || 0;
-        const isFreelancer = emp.contract_type === '프리랜서';
-        
+        const inputs = row.querySelectorAll('.deduction-input');
         let deduction = 0;
-        if (isFreelancer) {
-          deduction += parseInt(row.querySelector('[data-field="business_income_tax"]')?.value || 0);
-          deduction += parseInt(row.querySelector('[data-field="local_tax"]')?.value || 0);
-        } else {
-          deduction += parseInt(row.querySelector('[data-field="four_insure"]')?.value || 0);
-          deduction += parseInt(row.querySelector('[data-field="income_tax"]')?.value || 0);
-        }
-        deduction += parseInt(row.querySelector('[data-field="other_deduction"]')?.value || 0);
+        inputs.forEach(input => {
+          deduction += parseInt(input.value || 0);
+        });
         
         totalSalary += salary;
         totalDeduction += deduction;
@@ -309,23 +308,23 @@
           const row = document.querySelector(`tr[data-idx="${idx}"]`);
           if (!row || emp.salary_status === '지급완료') continue;
           
-          const isFreelancer = emp.contract_type === '프리랜서';
+          const isFreelancer = row.dataset.freelancer === 'true';
           const totalSalary = emp.salary_total || 0;
           
+          const field1 = isFreelancer ? 'business_income_tax' : 'four_insure';
+          const field2 = isFreelancer ? 'local_tax' : 'income_tax';
+          
+          const val1 = parseInt(row.querySelector(`[data-field="${field1}"]`)?.value || 0);
+          const val2 = parseInt(row.querySelector(`[data-field="${field2}"]`)?.value || 0);
+          const otherDeduction = parseInt(row.querySelector('[data-field="other_deduction"]')?.value || 0);
+          
           const updateData = {
-            other_deduction: parseInt(row.querySelector('[data-field="other_deduction"]')?.value || 0),
+            [field1]: val1,
+            [field2]: val2,
+            other_deduction: otherDeduction,
+            deduction_sum: val1 + val2 + otherDeduction,
             salary_status: '세무검토완료',
           };
-          
-          if (isFreelancer) {
-            updateData.business_income_tax = parseInt(row.querySelector('[data-field="business_income_tax"]')?.value || 0);
-            updateData.local_tax = parseInt(row.querySelector('[data-field="local_tax"]')?.value || 0);
-            updateData.deduction_sum = updateData.business_income_tax + updateData.local_tax + updateData.other_deduction;
-          } else {
-            updateData.four_insure = parseInt(row.querySelector('[data-field="four_insure"]')?.value || 0);
-            updateData.income_tax = parseInt(row.querySelector('[data-field="income_tax"]')?.value || 0);
-            updateData.deduction_sum = updateData.four_insure + updateData.income_tax + updateData.other_deduction;
-          }
           updateData.salary_net = totalSalary - updateData.deduction_sum;
           
           const tableName = emp._type === 'pro' ? 'v2_salary_pro' : 'v2_salary_manager';
