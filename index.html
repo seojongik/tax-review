@@ -3,107 +3,132 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>급여 공제 입력</title>
+  <title>세무사 급여 검토</title>
   <link rel="icon" href="data:,">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f0f2f5;min-height:100vh;padding:20px}
-    .container{max-width:1400px;margin:0 auto}
-    .header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;padding:24px 32px;border-radius:16px 16px 0 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
-    .header h1{font-size:24px;font-weight:700}
-    .header .subtitle{opacity:.9;margin-top:4px;font-size:14px}
-    .header-info{display:flex;gap:24px;align-items:center;flex-wrap:wrap}
-    .header-info .info-item{text-align:right}
-    .header-info .info-item label{font-size:11px;opacity:.8;display:block}
-    .header-info .info-item span{font-size:14px;font-weight:600}
-    .btn{padding:12px 24px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
-    .btn-primary{background:#fff;color:#667eea}
-    .btn-primary:hover{background:#f0f0f0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f0f2f5;min-height:100vh}
+    
+    /* 레이아웃 */
+    .layout{display:flex;min-height:100vh}
+    .sidebar{width:280px;background:#1e293b;color:#fff;padding:20px;flex-shrink:0;display:flex;flex-direction:column}
+    .main{flex:1;padding:24px;overflow-x:auto}
+    
+    /* 사이드바 */
+    .sidebar-header{margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,.1)}
+    .sidebar-header h1{font-size:18px;font-weight:700;margin-bottom:4px}
+    .sidebar-header .subtitle{font-size:12px;opacity:.7}
+    .tax-office-name{font-size:14px;color:#60a5fa;margin-top:8px}
+    
+    .nav-section{margin-bottom:24px}
+    .nav-section-title{font-size:11px;text-transform:uppercase;letter-spacing:1px;opacity:.5;margin-bottom:12px}
+    .nav-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:8px;cursor:pointer;transition:all .2s;margin-bottom:4px}
+    .nav-item:hover{background:rgba(255,255,255,.1)}
+    .nav-item.active{background:#667eea;color:#fff}
+    .nav-item .icon{width:20px;text-align:center}
+    .nav-item .label{flex:1;font-size:14px}
+    .nav-item .badge{background:rgba(255,255,255,.2);padding:2px 8px;border-radius:10px;font-size:11px}
+    .nav-item.active .badge{background:rgba(255,255,255,.3)}
+    
+    .month-selector{margin-top:auto;padding-top:16px;border-top:1px solid rgba(255,255,255,.1)}
+    .month-selector label{font-size:12px;opacity:.7;display:block;margin-bottom:8px}
+    .month-selector select{width:100%;padding:10px 12px;border-radius:6px;border:none;background:#334155;color:#fff;font-size:14px}
+    
+    /* 메인 컨텐츠 */
+    .page-header{margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+    .page-header h2{font-size:24px;font-weight:700;color:#1e293b}
+    .page-header .actions{display:flex;gap:12px}
+    
+    .btn{padding:10px 20px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:8px}
+    .btn-primary{background:#667eea;color:#fff}
+    .btn-primary:hover{background:#5a67d8}
     .btn-primary:disabled{opacity:.6;cursor:not-allowed}
     .btn-success{background:#10b981;color:#fff}
     .btn-success:hover{background:#059669}
-    .card{background:#fff;border-radius:0 0 16px 16px;box-shadow:0 4px 20px rgba(0,0,0,.08);overflow:hidden}
-    .message{padding:16px 24px;text-align:center;font-weight:500}
+    .btn-outline{background:#fff;color:#374151;border:1px solid #d1d5db}
+    .btn-outline:hover{background:#f9fafb}
+    
+    .card{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.1);overflow:hidden;margin-bottom:24px}
+    .card-header{padding:16px 20px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center}
+    .card-header h3{font-size:16px;font-weight:600;color:#1e293b}
+    .card-body{padding:20px}
+    
+    .message{padding:12px 20px;font-weight:500;display:flex;align-items:center;gap:8px}
     .message.success{background:#d1fae5;color:#065f46}
     .message.error{background:#fee2e2;color:#991b1b}
     .message.warning{background:#fef3c7;color:#92400e}
-    table{width:100%;border-collapse:collapse;table-layout:fixed}
-    th,td{padding:12px 16px;text-align:left;border-bottom:1px solid #e5e7eb;overflow:hidden;text-overflow:ellipsis}
-    th{background:#f8f9fa;font-weight:600;font-size:13px;color:#374151;position:sticky;top:0}
-    td{font-size:14px}
-    tr:hover{background:#f8f9fa}
+    .message.info{background:#dbeafe;color:#1e40af}
+    
+    /* 테이블 */
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:12px 16px;text-align:left;border-bottom:1px solid #e5e7eb}
+    th{background:#f8fafc;font-weight:600;font-size:13px;color:#64748b}
+    td{font-size:14px;color:#1e293b}
+    tr:hover{background:#f8fafc}
     tr.completed{background:#f0fdf4}
-    tr.completed input{background:#e5e7eb}
-    .col-name{width:140px}
-    .col-contract{width:90px}
-    .col-salary{width:130px}
-    .col-input{width:130px}
-    .col-sum{width:110px}
-    .col-net{width:130px}
-    .col-status{width:90px}
+    
     .name-cell{font-weight:600;display:flex;align-items:center;gap:8px}
-    .type-badge{font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500;white-space:nowrap}
+    .type-badge{font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500}
     .type-badge.pro{background:#dbeafe;color:#1d4ed8}
     .type-badge.manager{background:#fef3c7;color:#92400e}
-    .amount{text-align:right;font-family:'SF Mono',monospace;white-space:nowrap}
-    .deduction-input{width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;text-align:right;transition:border-color .2s}
+    
+    .amount{text-align:right;font-family:'SF Mono',Consolas,monospace}
+    .deduction-input{width:100%;max-width:120px;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;text-align:right}
     .deduction-input:focus{outline:none;border-color:#667eea;box-shadow:0 0 0 3px rgba(102,126,234,.1)}
     .deduction-input:read-only{background:#f3f4f6;cursor:not-allowed}
+    
     .deduction-sum{color:#dc2626;font-weight:600}
-    .net-salary{color:#059669;font-weight:700;font-size:15px}
-    .status-badge{font-size:12px;padding:4px 10px;border-radius:20px;background:#e5e7eb;color:#4b5563;white-space:nowrap}
-    .status-badge.done{background:#dbeafe;color:#1d4ed8}
-    .status-badge.paid{background:#d1fae5;color:#065f46}
-    .summary-bar{display:flex;justify-content:space-between;gap:32px;padding:16px 24px;background:#f8f9fa;border-top:2px solid #e5e7eb;flex-wrap:wrap}
-    .summary-left{display:flex;gap:16px;align-items:center}
-    .summary-right{display:flex;gap:32px}
+    .net-salary{color:#059669;font-weight:700}
+    
+    .status-badge{font-size:12px;padding:4px 10px;border-radius:20px;font-weight:500}
+    .status-badge.waiting{background:#e5e7eb;color:#4b5563}
+    .status-badge.sent{background:#fef3c7;color:#92400e}
+    .status-badge.reviewing{background:#dbeafe;color:#1d4ed8}
+    .status-badge.done{background:#d1fae5;color:#065f46}
+    .status-badge.paid{background:#c7d2fe;color:#4338ca}
+    
+    /* 요약 바 */
+    .summary-bar{display:flex;justify-content:space-between;padding:16px 20px;background:#f8fafc;border-top:1px solid #e5e7eb;flex-wrap:wrap;gap:16px}
+    .summary-left{display:flex;gap:12px}
+    .summary-right{display:flex;gap:24px}
     .summary-item{text-align:right}
-    .summary-item label{font-size:12px;color:#6b7280;display:block}
+    .summary-item label{font-size:12px;color:#64748b;display:block;margin-bottom:2px}
     .summary-item span{font-size:18px;font-weight:700}
-    .summary-item.total span{color:#1f2937}
+    .summary-item.total span{color:#1e293b}
     .summary-item.deduction span{color:#dc2626}
     .summary-item.net span{color:#059669}
-    .loading{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;z-index:1000;flex-direction:column;gap:16px}
-    .loading.hide{display:none}
-    .spinner{width:48px;height:48px;border:4px solid #e5e7eb;border-top-color:#667eea;border-radius:50%;animation:spin 1s linear infinite}
+    
+    /* 히스토리 */
+    .history-list{display:flex;flex-direction:column;gap:12px}
+    .history-item{display:flex;align-items:center;gap:16px;padding:12px;background:#f8fafc;border-radius:8px}
+    .history-item .month{font-weight:600;min-width:100px}
+    .history-item .status{flex:1}
+    .history-item .date{font-size:13px;color:#64748b}
+    
+    /* 로딩 & 에러 */
+    .loading{display:flex;align-items:center;justify-content:center;padding:60px;flex-direction:column;gap:16px}
+    .spinner{width:40px;height:40px;border:3px solid #e5e7eb;border-top-color:#667eea;border-radius:50%;animation:spin 1s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
-    .empty-state{text-align:center;padding:60px 20px;color:#6b7280}
+    
+    .empty-state{text-align:center;padding:60px 20px;color:#64748b}
     .empty-state .icon{font-size:48px;margin-bottom:16px}
-    .error-state{text-align:center;padding:60px 20px}
-    .error-state .icon{font-size:48px;margin-bottom:16px}
-    .error-state h2{color:#dc2626;margin-bottom:8px}
-    .error-state p{color:#6b7280}
-    .readonly-notice{background:#fef3c7;color:#92400e;padding:12px 24px;display:flex;align-items:center;gap:8px;font-size:14px}
-    .readonly-notice .icon{font-size:18px}
+    
+    .error-page{display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px;padding:20px}
+    .error-page .icon{font-size:64px}
+    .error-page h2{font-size:24px;color:#dc2626}
+    .error-page p{color:#64748b}
+    
+    /* 반응형 */
+    @media(max-width:768px){
+      .layout{flex-direction:column}
+      .sidebar{width:100%;padding:16px}
+      .main{padding:16px}
+    }
   </style>
 </head>
 <body>
-  <div class="loading" id="loading">
-    <div class="spinner"></div>
-    <div>데이터를 불러오는 중...</div>
-  </div>
-  
-  <div class="container" id="mainContent" style="display:none">
-    <div class="header">
-      <div>
-        <h1 id="pageTitle">급여 공제 입력</h1>
-        <div class="subtitle" id="pageSubtitle">세무사님께서 각 직원의 공제 금액을 입력해 주세요</div>
-      </div>
-      <div class="header-info">
-        <div class="info-item" id="taxOfficeInfo" style="display:none">
-          <label>세무사</label>
-          <span id="taxOfficeName">-</span>
-        </div>
-        <button class="btn btn-primary" id="saveAllBtn" onclick="saveAll()">전체 저장</button>
-      </div>
-    </div>
-    <div class="card">
-      <div id="noticeArea"></div>
-      <div id="messageArea"></div>
-      <div id="contentArea"></div>
-    </div>
-  </div>
+  <div id="app"></div>
 
   <script>
     const SUPABASE_URL = 'https://yejialakeivdhwntmagf.supabase.co';
@@ -111,25 +136,172 @@
     
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
+    // URL 파라미터
     const params = new URLSearchParams(window.location.search);
-    const branchId = params.get('branch');
-    const year = parseInt(params.get('year')) || new Date().getFullYear();
-    const month = parseInt(params.get('month')) || (new Date().getMonth() + 1);
     const token = params.get('token');
+    const initialBranch = params.get('branch');
+    const initialYear = parseInt(params.get('year')) || new Date().getFullYear();
+    const initialMonth = parseInt(params.get('month')) || new Date().getMonth() + 1;
     
-    let allEmployees = [];
-    let submissionInfo = null;
-    let isReadOnly = false;
+    // 상태
+    let state = {
+      taxOffice: null,
+      branches: [],           // 이 세무사가 관리하는 지점 목록
+      submissions: [],        // 발송 이력
+      selectedBranch: initialBranch,
+      selectedYear: initialYear,
+      selectedMonth: initialMonth,
+      employees: [],
+      loading: true,
+      error: null,
+      view: 'salary'          // salary | history
+    };
     
     function formatCurrency(amount) {
       return new Intl.NumberFormat('ko-KR').format(amount || 0) + '원';
     }
     
+    function getStatusBadge(status) {
+      const map = {
+        '대기': { class: 'waiting', label: '대기' },
+        '발송완료': { class: 'sent', label: '발송완료' },
+        '세무사검토': { class: 'reviewing', label: '검토중' },
+        '검토완료': { class: 'done', label: '검토완료' },
+        '세무검토완료': { class: 'done', label: '검토완료' },
+        '확정': { class: 'paid', label: '확정' },
+        '지급완료': { class: 'paid', label: '지급완료' },
+        '작업중': { class: 'waiting', label: '작업중' },
+        '제출완료': { class: 'sent', label: '제출완료' }
+      };
+      const info = map[status] || { class: 'waiting', label: status || '대기' };
+      return `<span class="status-badge ${info.class}">${info.label}</span>`;
+    }
+    
+    // 초기 로딩
+    async function init() {
+      if (!token) {
+        showError('유효하지 않은 접근입니다. (토큰 필요)');
+        return;
+      }
+      
+      try {
+        // 토큰으로 세무사가 관리하는 모든 지점 조회
+        const { data: submissions, error } = await db
+          .from('v2_salary_tax_submission')
+          .select('*')
+          .eq('submission_token', token)
+          .order('year', { ascending: false })
+          .order('month', { ascending: false });
+        
+        if (error) throw error;
+        
+        if (!submissions || submissions.length === 0) {
+          // 단일 지점 모드 (기존 방식 호환)
+          if (initialBranch) {
+            state.selectedBranch = initialBranch;
+            state.taxOffice = '세무사';
+            state.branches = [{ branch_id: initialBranch, branch_name: initialBranch }];
+          } else {
+            showError('등록된 발송 정보가 없습니다.');
+            return;
+          }
+        } else {
+          state.submissions = submissions;
+          state.taxOffice = submissions[0].tax_office || '세무사';
+          
+          // 고유 지점 목록 추출
+          const branchMap = new Map();
+          submissions.forEach(s => {
+            if (!branchMap.has(s.branch_id)) {
+              branchMap.set(s.branch_id, { branch_id: s.branch_id, branch_name: s.branch_id });
+            }
+          });
+          state.branches = Array.from(branchMap.values());
+          
+          // 첫 번째 지점 선택
+          if (!state.selectedBranch && state.branches.length > 0) {
+            state.selectedBranch = state.branches[0].branch_id;
+          }
+        }
+        
+        // 지점명 조회
+        await loadBranchNames();
+        
+        // 급여 데이터 로드
+        await loadSalaryData();
+        
+      } catch (err) {
+        console.error(err);
+        showError('데이터를 불러오는데 실패했습니다.');
+      }
+    }
+    
+    async function loadBranchNames() {
+      try {
+        const branchIds = state.branches.map(b => b.branch_id);
+        const { data } = await db
+          .from('v2_branch')
+          .select('branch_id, branch_name')
+          .in('branch_id', branchIds);
+        
+        if (data) {
+          const nameMap = new Map(data.map(b => [b.branch_id, b.branch_name]));
+          state.branches = state.branches.map(b => ({
+            ...b,
+            branch_name: nameMap.get(b.branch_id) || b.branch_id
+          }));
+        }
+      } catch (e) {
+        console.log('지점명 조회 실패:', e);
+      }
+    }
+    
+    async function loadSalaryData() {
+      if (!state.selectedBranch) {
+        state.employees = [];
+        render();
+        return;
+      }
+      
+      state.loading = true;
+      render();
+      
+      try {
+        const { data: proData } = await db
+          .from('v2_salary_pro')
+          .select('*')
+          .eq('branch_id', state.selectedBranch)
+          .eq('year', state.selectedYear)
+          .eq('month', state.selectedMonth)
+          .order('pro_name');
+        
+        const { data: managerData } = await db
+          .from('v2_salary_manager')
+          .select('*')
+          .eq('branch_id', state.selectedBranch)
+          .eq('year', state.selectedYear)
+          .eq('month', state.selectedMonth)
+          .order('manager_name');
+        
+        state.employees = [
+          ...(proData || []).map(e => ({...e, _type: 'pro', _name: e.pro_name})),
+          ...(managerData || []).map(e => ({...e, _type: 'manager', _name: e.manager_name}))
+        ];
+        
+        state.loading = false;
+        render();
+        
+      } catch (err) {
+        console.error(err);
+        state.loading = false;
+        state.error = '데이터 조회 실패';
+        render();
+      }
+    }
+    
     function showError(message) {
-      document.getElementById('loading').classList.add('hide');
-      document.getElementById('mainContent').style.display = 'block';
-      document.getElementById('contentArea').innerHTML = `
-        <div class="error-state">
+      document.getElementById('app').innerHTML = `
+        <div class="error-page">
           <div class="icon">❌</div>
           <h2>오류</h2>
           <p>${message}</p>
@@ -137,217 +309,265 @@
       `;
     }
     
-    async function loadData() {
-      if (!token) {
-        showError('유효하지 않은 접근입니다. (토큰 필요)');
-        return;
-      }
-      if (!branchId) {
-        showError('지점 정보가 필요합니다. (?branch=xxx)');
-        return;
-      }
+    function render() {
+      const currentSubmission = state.submissions.find(s => 
+        s.branch_id === state.selectedBranch && 
+        s.year === state.selectedYear && 
+        s.month == state.selectedMonth
+      );
+      const isReadOnly = currentSubmission?.submission_status === '확정';
       
-      try {
-        // 1. 발송 정보 확인 (토큰 검증)
-        const { data: submissionData, error: submissionError } = await db
-          .from('v2_salary_tax_submission')
-          .select('*')
-          .eq('branch_id', branchId)
-          .eq('year', year)
-          .eq('month', month)
-          .single();
-        
-        if (submissionError && submissionError.code !== 'PGRST116') {
-          console.error('Submission Error:', submissionError);
-        }
-        
-        submissionInfo = submissionData;
-        
-        // 토큰 검증 (발송 정보가 있고 토큰이 일치하는지)
-        if (submissionInfo && submissionInfo.submission_token && submissionInfo.submission_token !== token) {
-          showError('유효하지 않은 토큰입니다.');
-          return;
-        }
-        
-        // 이미 확정된 경우 읽기 전용
-        if (submissionInfo && submissionInfo.submission_status === '확정') {
-          isReadOnly = true;
-        }
-        
-        // 2. 급여 데이터 로드
-        const { data: proData, error: proError } = await db
-          .from('v2_salary_pro')
-          .select('*')
-          .eq('branch_id', branchId)
-          .eq('year', year)
-          .eq('month', month)
-          .order('pro_name');
-        
-        const { data: managerData, error: managerError } = await db
-          .from('v2_salary_manager')
-          .select('*')
-          .eq('branch_id', branchId)
-          .eq('year', year)
-          .eq('month', month)
-          .order('manager_name');
-        
-        if (proError || managerError) {
-          console.error('Pro Error:', proError);
-          console.error('Manager Error:', managerError);
-          throw new Error('데이터 조회 실패');
-        }
-        
-        allEmployees = [
-          ...(proData || []).map(e => ({...e, _type: 'pro', _name: e.pro_name})),
-          ...(managerData || []).map(e => ({...e, _type: 'manager', _name: e.manager_name}))
-        ];
-        
-        renderTable();
-        
-      } catch (error) {
-        console.error(error);
-        showError('데이터를 불러오는데 실패했습니다.');
+      // 해당 지점의 월별 이력
+      const branchHistory = state.submissions
+        .filter(s => s.branch_id === state.selectedBranch)
+        .slice(0, 12);
+      
+      document.getElementById('app').innerHTML = `
+        <div class="layout">
+          <div class="sidebar">
+            <div class="sidebar-header">
+              <h1>급여 검토 시스템</h1>
+              <div class="subtitle">Tax Review Portal</div>
+              <div class="tax-office-name">🏢 ${state.taxOffice}</div>
+            </div>
+            
+            <div class="nav-section">
+              <div class="nav-section-title">지점 선택</div>
+              ${state.branches.map(b => `
+                <div class="nav-item ${state.selectedBranch === b.branch_id ? 'active' : ''}" onclick="selectBranch('${b.branch_id}')">
+                  <span class="icon">🏪</span>
+                  <span class="label">${b.branch_name}</span>
+                  ${getSubmissionBadge(b.branch_id)}
+                </div>
+              `).join('')}
+            </div>
+            
+            <div class="nav-section">
+              <div class="nav-section-title">메뉴</div>
+              <div class="nav-item ${state.view === 'salary' ? 'active' : ''}" onclick="setView('salary')">
+                <span class="icon">📋</span>
+                <span class="label">급여 검토</span>
+              </div>
+              <div class="nav-item ${state.view === 'history' ? 'active' : ''}" onclick="setView('history')">
+                <span class="icon">📅</span>
+                <span class="label">월별 이력</span>
+              </div>
+            </div>
+            
+            <div class="month-selector">
+              <label>기준 월</label>
+              <select onchange="changeMonth(this.value)">
+                ${generateMonthOptions()}
+              </select>
+            </div>
+          </div>
+          
+          <div class="main">
+            ${state.view === 'salary' ? renderSalaryView(currentSubmission, isReadOnly) : renderHistoryView(branchHistory)}
+          </div>
+        </div>
+      `;
+      
+      // 이벤트 바인딩
+      if (state.view === 'salary') {
+        bindInputEvents();
       }
     }
     
-    function renderTable() {
-      document.getElementById('loading').classList.add('hide');
-      document.getElementById('mainContent').style.display = 'block';
-      document.getElementById('pageTitle').textContent = `${year}년 ${month}월 급여 공제 입력`;
+    function getSubmissionBadge(branchId) {
+      const sub = state.submissions.find(s => 
+        s.branch_id === branchId && 
+        s.year === state.selectedYear && 
+        s.month == state.selectedMonth
+      );
+      if (!sub) return '';
       
-      // 세무사 정보 표시
-      if (submissionInfo && submissionInfo.tax_office) {
-        document.getElementById('taxOfficeInfo').style.display = 'block';
-        document.getElementById('taxOfficeName').textContent = submissionInfo.tax_office;
+      const statusMap = {
+        '대기': '⏳',
+        '발송완료': '📤',
+        '검토완료': '✅',
+        '확정': '🔒'
+      };
+      return `<span class="badge">${statusMap[sub.submission_status] || ''}</span>`;
+    }
+    
+    function generateMonthOptions() {
+      const options = [];
+      const now = new Date();
+      for (let i = 0; i < 12; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const y = d.getFullYear();
+        const m = d.getMonth() + 1;
+        const selected = (y === state.selectedYear && m === state.selectedMonth) ? 'selected' : '';
+        options.push(`<option value="${y}-${m}" ${selected}>${y}년 ${m}월</option>`);
       }
+      return options.join('');
+    }
+    
+    function renderSalaryView(submission, isReadOnly) {
+      const branchName = state.branches.find(b => b.branch_id === state.selectedBranch)?.branch_name || state.selectedBranch;
       
-      // 읽기 전용 안내
-      if (isReadOnly) {
-        document.getElementById('noticeArea').innerHTML = `
-          <div class="readonly-notice">
-            <span class="icon">🔒</span>
-            이미 확정된 급여입니다. 수정이 필요한 경우 담당자에게 문의하세요.
+      if (state.loading) {
+        return `
+          <div class="loading">
+            <div class="spinner"></div>
+            <div>데이터를 불러오는 중...</div>
           </div>
         `;
-        document.getElementById('saveAllBtn').style.display = 'none';
-        document.getElementById('pageSubtitle').textContent = '확정된 급여 내역입니다';
       }
       
-      if (allEmployees.length === 0) {
-        document.getElementById('contentArea').innerHTML = `
-          <div class="empty-state">
-            <div class="icon">📋</div>
-            <p>해당 월의 급여 데이터가 없습니다.</p>
+      if (state.employees.length === 0) {
+        return `
+          <div class="page-header">
+            <h2>${branchName} - ${state.selectedYear}년 ${state.selectedMonth}월</h2>
+          </div>
+          <div class="card">
+            <div class="empty-state">
+              <div class="icon">📋</div>
+              <p>해당 월의 급여 데이터가 없습니다.</p>
+            </div>
           </div>
         `;
-        return;
       }
       
-      const rows = allEmployees.map((emp, idx) => {
+      const rows = state.employees.map((emp, idx) => {
         const isFreelancer = emp.contract_type === '프리랜서';
         const type = emp._type === 'pro' ? '강사' : '매니저';
         const totalSalary = emp.salary_total || 0;
         
-        let currentDeduction = 0;
+        let deduction = 0;
         if (isFreelancer) {
-          currentDeduction = (emp.business_income_tax || 0) + (emp.local_tax || 0);
+          deduction = (emp.business_income_tax || 0) + (emp.local_tax || 0);
         } else {
-          currentDeduction = (emp.four_insure || 0) + (emp.income_tax || 0);
+          deduction = (emp.four_insure || 0) + (emp.income_tax || 0);
         }
-        currentDeduction += (emp.other_deduction || 0);
-        const netSalary = totalSalary - currentDeduction;
-        
-        const isCompleted = emp.salary_status === '지급완료';
-        const rowClass = isCompleted ? 'completed' : '';
-        const readonlyAttr = (isReadOnly || isCompleted) ? 'readonly' : '';
+        deduction += (emp.other_deduction || 0);
+        const netSalary = totalSalary - deduction;
         
         const field1 = isFreelancer ? 'business_income_tax' : 'four_insure';
         const field2 = isFreelancer ? 'local_tax' : 'income_tax';
-        const val1 = emp[field1] || 0;
-        const val2 = emp[field2] || 0;
+        const readonlyAttr = (isReadOnly || emp.salary_status === '지급완료') ? 'readonly' : '';
         
         return `
-          <tr class="${rowClass}" data-idx="${idx}" data-freelancer="${isFreelancer}">
-            <td class="col-name">
+          <tr data-idx="${idx}" data-freelancer="${isFreelancer}" class="${emp.salary_status === '지급완료' ? 'completed' : ''}">
+            <td>
               <div class="name-cell">
                 <span class="type-badge ${emp._type}">${type}</span>
                 ${emp._name}
               </div>
             </td>
-            <td class="col-contract">${emp.contract_type || '-'}</td>
-            <td class="col-salary amount">${formatCurrency(totalSalary)}</td>
-            <td class="col-input"><input type="number" data-field="${field1}" value="${val1}" ${readonlyAttr} class="deduction-input" oninput="updateRow(${idx})"></td>
-            <td class="col-input"><input type="number" data-field="${field2}" value="${val2}" ${readonlyAttr} class="deduction-input" oninput="updateRow(${idx})"></td>
-            <td class="col-input"><input type="number" data-field="other_deduction" value="${emp.other_deduction || 0}" ${readonlyAttr} class="deduction-input" oninput="updateRow(${idx})"></td>
-            <td class="col-sum amount deduction-sum" id="deduction-${idx}">${formatCurrency(currentDeduction)}</td>
-            <td class="col-net amount net-salary" id="net-${idx}">${formatCurrency(netSalary)}</td>
-            <td class="col-status">
-              <span class="status-badge ${emp.salary_status === '세무검토완료' ? 'done' : emp.salary_status === '지급완료' ? 'paid' : ''}">
-                ${emp.salary_status || '대기'}
-              </span>
-            </td>
+            <td>${emp.contract_type || '-'}</td>
+            <td class="amount">${formatCurrency(totalSalary)}</td>
+            <td><input type="number" class="deduction-input" data-field="${field1}" value="${emp[field1] || 0}" ${readonlyAttr}></td>
+            <td><input type="number" class="deduction-input" data-field="${field2}" value="${emp[field2] || 0}" ${readonlyAttr}></td>
+            <td><input type="number" class="deduction-input" data-field="other_deduction" value="${emp.other_deduction || 0}" ${readonlyAttr}></td>
+            <td class="amount deduction-sum">${formatCurrency(deduction)}</td>
+            <td class="amount net-salary">${formatCurrency(netSalary)}</td>
+            <td>${getStatusBadge(emp.salary_status)}</td>
           </tr>
         `;
       }).join('');
       
-      document.getElementById('contentArea').innerHTML = `
-        <div style="overflow-x:auto">
-          <table>
-            <thead>
-              <tr>
-                <th class="col-name">이름</th>
-                <th class="col-contract">계약형태</th>
-                <th class="col-salary" style="text-align:right">총급여</th>
-                <th class="col-input">4대보험/사업소득세</th>
-                <th class="col-input">소득세/지방소득세</th>
-                <th class="col-input">기타공제</th>
-                <th class="col-sum" style="text-align:right">공제합계</th>
-                <th class="col-net" style="text-align:right">실수령액</th>
-                <th class="col-status">상태</th>
-              </tr>
-            </thead>
-            <tbody id="employeeTable">${rows}</tbody>
-          </table>
-        </div>
-        <div class="summary-bar">
-          <div class="summary-left">
-            ${!isReadOnly ? '<button class="btn btn-success" onclick="completeReview()">검토 완료</button>' : ''}
+      return `
+        <div class="page-header">
+          <h2>${branchName} - ${state.selectedYear}년 ${state.selectedMonth}월</h2>
+          <div class="actions">
+            ${!isReadOnly ? `
+              <button class="btn btn-outline" onclick="saveAll()">💾 저장</button>
+              <button class="btn btn-success" onclick="completeReview()">✅ 검토 완료</button>
+            ` : ''}
           </div>
-          <div class="summary-right">
-            <div class="summary-item total"><label>총 급여 합계</label><span id="summaryTotal">0원</span></div>
-            <div class="summary-item deduction"><label>총 공제 합계</label><span id="summaryDeduction">0원</span></div>
-            <div class="summary-item net"><label>총 실수령액</label><span id="summaryNet">0원</span></div>
+        </div>
+        
+        ${isReadOnly ? `
+          <div class="message warning">
+            <span>🔒</span> 이미 확정된 급여입니다. 수정이 필요한 경우 담당자에게 문의하세요.
+          </div>
+        ` : ''}
+        
+        <div id="messageArea"></div>
+        
+        <div class="card">
+          <div style="overflow-x:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>이름</th>
+                  <th>계약형태</th>
+                  <th class="amount">총급여</th>
+                  <th>4대보험/사업소득세</th>
+                  <th>소득세/지방소득세</th>
+                  <th>기타공제</th>
+                  <th class="amount">공제합계</th>
+                  <th class="amount">실수령액</th>
+                  <th>상태</th>
+                </tr>
+              </thead>
+              <tbody id="employeeTable">${rows}</tbody>
+            </table>
+          </div>
+          <div class="summary-bar">
+            <div class="summary-left">
+              ${submission ? `<span style="font-size:13px;color:#64748b">발송일: ${submission.sent_at ? new Date(submission.sent_at).toLocaleDateString('ko-KR') : '-'}</span>` : ''}
+            </div>
+            <div class="summary-right">
+              <div class="summary-item total"><label>총 급여</label><span id="summaryTotal">0원</span></div>
+              <div class="summary-item deduction"><label>총 공제</label><span id="summaryDeduction">0원</span></div>
+              <div class="summary-item net"><label>실수령액</label><span id="summaryNet">0원</span></div>
+            </div>
           </div>
         </div>
       `;
-      
-      updateSummary();
     }
     
-    function updateRow(idx) {
-      const emp = allEmployees[idx];
-      const row = document.querySelector(`tr[data-idx="${idx}"]`);
-      const totalSalary = emp.salary_total || 0;
+    function renderHistoryView(history) {
+      const branchName = state.branches.find(b => b.branch_id === state.selectedBranch)?.branch_name || state.selectedBranch;
       
-      const inputs = row.querySelectorAll('.deduction-input');
-      let deduction = 0;
-      inputs.forEach(input => {
-        deduction += parseInt(input.value || 0);
+      return `
+        <div class="page-header">
+          <h2>${branchName} - 월별 이력</h2>
+        </div>
+        
+        <div class="card">
+          <div class="card-body">
+            ${history.length === 0 ? `
+              <div class="empty-state">
+                <div class="icon">📅</div>
+                <p>이력이 없습니다.</p>
+              </div>
+            ` : `
+              <div class="history-list">
+                ${history.map(h => `
+                  <div class="history-item" onclick="goToMonth(${h.year}, ${h.month})" style="cursor:pointer">
+                    <div class="month">${h.year}년 ${h.month}월</div>
+                    <div class="status">${getStatusBadge(h.submission_status)}</div>
+                    <div class="date">
+                      ${h.sent_at ? '발송: ' + new Date(h.sent_at).toLocaleDateString('ko-KR') : ''}
+                      ${h.reviewed_at ? ' | 검토: ' + new Date(h.reviewed_at).toLocaleDateString('ko-KR') : ''}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            `}
+          </div>
+        </div>
+      `;
+    }
+    
+    function bindInputEvents() {
+      document.querySelectorAll('.deduction-input').forEach(input => {
+        input.addEventListener('input', updateCalculations);
       });
-      
-      document.getElementById(`deduction-${idx}`).textContent = formatCurrency(deduction);
-      document.getElementById(`net-${idx}`).textContent = formatCurrency(totalSalary - deduction);
-      
-      updateSummary();
+      updateCalculations();
     }
     
-    function updateSummary() {
+    function updateCalculations() {
       let totalSalary = 0;
       let totalDeduction = 0;
       
-      allEmployees.forEach((emp, idx) => {
-        const row = document.querySelector(`tr[data-idx="${idx}"]`);
-        if (!row) return;
+      document.querySelectorAll('#employeeTable tr').forEach((row, idx) => {
+        const emp = state.employees[idx];
+        if (!emp) return;
         
         const salary = emp.salary_total || 0;
         const inputs = row.querySelectorAll('.deduction-input');
@@ -356,25 +576,54 @@
           deduction += parseInt(input.value || 0);
         });
         
+        row.querySelector('.deduction-sum').textContent = formatCurrency(deduction);
+        row.querySelector('.net-salary').textContent = formatCurrency(salary - deduction);
+        
         totalSalary += salary;
         totalDeduction += deduction;
       });
       
-      document.getElementById('summaryTotal').textContent = formatCurrency(totalSalary);
-      document.getElementById('summaryDeduction').textContent = formatCurrency(totalDeduction);
-      document.getElementById('summaryNet').textContent = formatCurrency(totalSalary - totalDeduction);
+      const summaryTotal = document.getElementById('summaryTotal');
+      const summaryDeduction = document.getElementById('summaryDeduction');
+      const summaryNet = document.getElementById('summaryNet');
+      
+      if (summaryTotal) summaryTotal.textContent = formatCurrency(totalSalary);
+      if (summaryDeduction) summaryDeduction.textContent = formatCurrency(totalDeduction);
+      if (summaryNet) summaryNet.textContent = formatCurrency(totalSalary - totalDeduction);
     }
     
-    async function saveAll() {
-      if (isReadOnly) return;
-      
-      const btn = document.getElementById('saveAllBtn');
-      btn.disabled = true;
-      btn.textContent = '저장 중...';
+    // 액션 함수들
+    window.selectBranch = function(branchId) {
+      state.selectedBranch = branchId;
+      loadSalaryData();
+    };
+    
+    window.setView = function(view) {
+      state.view = view;
+      render();
+      if (view === 'salary') bindInputEvents();
+    };
+    
+    window.changeMonth = function(value) {
+      const [year, month] = value.split('-').map(Number);
+      state.selectedYear = year;
+      state.selectedMonth = month;
+      loadSalaryData();
+    };
+    
+    window.goToMonth = function(year, month) {
+      state.selectedYear = year;
+      state.selectedMonth = month;
+      state.view = 'salary';
+      loadSalaryData();
+    };
+    
+    window.saveAll = async function() {
+      const messageArea = document.getElementById('messageArea');
       
       try {
-        for (let idx = 0; idx < allEmployees.length; idx++) {
-          const emp = allEmployees[idx];
+        for (let idx = 0; idx < state.employees.length; idx++) {
+          const emp = state.employees[idx];
           const row = document.querySelector(`tr[data-idx="${idx}"]`);
           if (!row || emp.salary_status === '지급완료') continue;
           
@@ -388,73 +637,69 @@
           const val2 = parseInt(row.querySelector(`[data-field="${field2}"]`)?.value || 0);
           const otherDeduction = parseInt(row.querySelector('[data-field="other_deduction"]')?.value || 0);
           
+          const deductionSum = val1 + val2 + otherDeduction;
+          
           const updateData = {
             [field1]: val1,
             [field2]: val2,
             other_deduction: otherDeduction,
-            deduction_sum: val1 + val2 + otherDeduction,
+            deduction_sum: deductionSum,
+            salary_net: totalSalary - deductionSum
           };
-          updateData.salary_net = totalSalary - updateData.deduction_sum;
           
           const tableName = emp._type === 'pro' ? 'v2_salary_pro' : 'v2_salary_manager';
           await db.from(tableName).update(updateData).eq('id', emp.id);
         }
         
-        document.getElementById('messageArea').innerHTML = '<div class="message success">✅ 저장되었습니다!</div>';
-        setTimeout(() => {
-          document.getElementById('messageArea').innerHTML = '';
-        }, 3000);
+        messageArea.innerHTML = '<div class="message success">✅ 저장되었습니다!</div>';
+        setTimeout(() => { messageArea.innerHTML = ''; }, 3000);
         
-        btn.disabled = false;
-        btn.textContent = '전체 저장';
-        
-      } catch (error) {
-        console.error(error);
-        document.getElementById('messageArea').innerHTML = '<div class="message error">저장에 실패했습니다.</div>';
-        btn.disabled = false;
-        btn.textContent = '전체 저장';
+      } catch (err) {
+        console.error(err);
+        messageArea.innerHTML = '<div class="message error">저장에 실패했습니다.</div>';
       }
-    }
+    };
     
-    async function completeReview() {
-      if (isReadOnly) return;
+    window.completeReview = async function() {
+      if (!confirm('검토를 완료하시겠습니까?\\n완료 후 담당자에게 알림이 전송됩니다.')) return;
       
-      if (!confirm('검토를 완료하시겠습니까?\\n완료 후에는 담당자에게 알림이 전송됩니다.')) {
-        return;
-      }
+      const messageArea = document.getElementById('messageArea');
       
       try {
-        // 먼저 저장
         await saveAll();
         
-        // 모든 직원 상태를 세무검토완료로 변경
-        for (let idx = 0; idx < allEmployees.length; idx++) {
-          const emp = allEmployees[idx];
+        // 모든 직원 상태 업데이트
+        for (const emp of state.employees) {
           if (emp.salary_status === '지급완료') continue;
-          
           const tableName = emp._type === 'pro' ? 'v2_salary_pro' : 'v2_salary_manager';
           await db.from(tableName).update({ salary_status: '세무검토완료' }).eq('id', emp.id);
         }
         
         // 발송 정보 업데이트
-        if (submissionInfo) {
+        const submission = state.submissions.find(s => 
+          s.branch_id === state.selectedBranch && 
+          s.year === state.selectedYear && 
+          s.month == state.selectedMonth
+        );
+        
+        if (submission) {
           await db.from('v2_salary_tax_submission').update({
             submission_status: '검토완료',
             reviewed_at: new Date().toISOString()
-          }).eq('id', submissionInfo.id);
+          }).eq('id', submission.id);
         }
         
-        document.getElementById('messageArea').innerHTML = '<div class="message success">✅ 검토가 완료되었습니다! 담당자에게 알림이 전송됩니다.</div>';
+        messageArea.innerHTML = '<div class="message success">✅ 검토가 완료되었습니다!</div>';
+        setTimeout(() => location.reload(), 1500);
         
-        setTimeout(() => location.reload(), 2000);
-        
-      } catch (error) {
-        console.error(error);
-        document.getElementById('messageArea').innerHTML = '<div class="message error">검토 완료 처리에 실패했습니다.</div>';
+      } catch (err) {
+        console.error(err);
+        messageArea.innerHTML = '<div class="message error">검토 완료 처리에 실패했습니다.</div>';
       }
-    }
+    };
     
-    loadData();
+    // 시작
+    init();
   </script>
 </body>
 </html>
